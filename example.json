@@ -1,0 +1,9 @@
+{
+    "zmq": 5555,
+    "joint": "#bots",
+    "password": "SERVPASS",
+    "server": "example.com",
+    "port": 6697,
+    "retry": 10,
+    "poll": 3
+}
