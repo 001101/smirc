@@ -1,0 +1,15 @@
+pkgname=smirc
+pkgver=0.0.1
+pkgrel=1
+pkgdesc='System monitor IRC bot'
+url='https://github.com/epiphyte/smirc'
+license=('MIT')
+depends=('python' 'python-pyzmq')
+makedepends=('git' 'python-setuptools')
+source=("git+$url")
+sha256sums=('SKIP')
+
+package() {
+  cd ${srcdir}/$pkgname
+  python setup.py install --root=${pkgdir} --optimize=1
+}

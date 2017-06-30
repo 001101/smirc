@@ -10,11 +10,11 @@ setup(
     description='IRC system monitoring bot',
     url='https://github.com/epiphyte/smirc',
     license='MIT',
-    packages=[],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     install_requires=['irc'],
     entry_points={
         'console_scripts': [
-            'smirc=smirc:main'
+            'smirc=smirc.smirc:main'
         ],
     },
 )
