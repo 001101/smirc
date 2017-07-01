@@ -102,10 +102,14 @@ def _act(connection, event):
                         _send_lines(connection,
                                     [event.target],
                                     "\n".join(cmds))
-                if d == RESTART:
+                if d == RESTART or d.startswith(RESTART + " "):
                     log.info("restart requested...")
                     with lock:
-                        RESET = True
+                        parts = d.split(" ")
+                        if event.target == CONTEXT.hostname or \
+                           (len(parts) > 1 and CONTEXT.name in parts[1:]):
+                               log.info('restart accepted...')
+                               RESET = True
                 cmd = None
                 subcmd = d.split(" ")
                 if len(subcmd) > 0:
