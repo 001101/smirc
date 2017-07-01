@@ -17,6 +17,8 @@ import logging
 from systemd.journal import JournalHandler
 import subprocess
 
+VERS = "__VERSION__"
+
 # globals
 READY = False
 HOST = True
@@ -89,7 +91,7 @@ def _act(connection, event):
                             JOINT = True
                         connection.privmsg(event.target, msg)
                 if d == STATUS:
-                    connection.privmsg(event.target, "alive")
+                    connection.privmsg(event.target, "alive: " + VERS)
                 if d == HELP:
                     _send_lines(connection, [event.target], HELP_TEXT)
                     cmds = []
