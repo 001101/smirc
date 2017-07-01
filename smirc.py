@@ -21,6 +21,7 @@ READY = False
 HOST = True
 JOINT = True
 CONTEXT = None
+RESET = False
 lock = threading.RLock()
 
 # events
@@ -28,6 +29,7 @@ IND = "!"
 STATUS = IND + "status"
 DEBUG = IND + "debug"
 HELP = IND + "help"
+RESTART = IND + "restart"
 
 # help text
 HELP_RAW = {}
@@ -39,6 +41,13 @@ HELP_TEXT = "\n".join(["{} => {}".format(x, HELP_RAW[x]) for x in HELP_RAW])
 log = logging.getLogger('smirc')
 log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
+
+def on_disconnect(connection, event):
+    log.info("disconnected")
+    log.info(event)
+    global RESET
+    with lock:
+        RESET = True
 
 def _send_lines(c, targets, val):
     """Send lines."""
@@ -63,6 +72,7 @@ def _act(connection, event):
     global HOST
     global JOINT
     global CONTEXT
+    global RESET
     data = event.arguments
     if data and len(data) > 0:
         for d in data:
@@ -82,6 +92,10 @@ def _act(connection, event):
                     connection.privmsg(event.target, "alive")
                 if d == HELP:
                     _send_lines(connection, [event.target], HELP_TEXT)
+                if d== RESTART:
+                    log.info("restart requested...")
+                    with lock:
+                        RESET = True
 
 
 def on_message(connection, event):
@@ -105,9 +119,9 @@ def queue_thread(args, q):
             socket.bind("tcp://*:%s" % args.zmq)
             while True:
                 message = socket.recv_string()
+                socket.send_string("ack")
                 log.info(message)
                 q.put(message)
-                socket.send_string("ack")
                 time.sleep(args.poll)
         except Exception as e:
             log.info("will rebind shortly")
@@ -161,6 +175,7 @@ def main():
     """Program entry."""
     global CONTEXT
     global READY
+    global RESET
     args = get_args()
     with lock:
         CONTEXT = args
@@ -168,9 +183,12 @@ def main():
         sending(args)
         return
     q = Queue()
-    background_thread = threading.Thread(target=queue_thread, args=(args, q,))
+    background_thread = threading.Thread(target=queue_thread, args=(args, q))
     background_thread.start()
     while True:
+        c = None
+        with lock:
+            RESET = False
         try:
             factory = conn.Factory(wrapper=ssl.wrap_socket)
             react = client.Reactor()
@@ -182,6 +200,8 @@ def main():
                                connect_factory=factory)
             c.add_global_handler("welcome", on_connect)
             c.add_global_handler("pubmsg", on_message)
+            c.add_global_handler("disconnect", on_disconnect)
+            c.add_global_handler("quit", on_disconnect)
             while True:
                 react.process_once(timeout=args.poll)
                 with lock:
@@ -196,10 +216,17 @@ def main():
                             _send_lines(c, targets, val)
                         except Empty:
                             pass
+                    if RESET:
+                        raise Exception("resetting...")
                 time.sleep(args.poll)
         except Exception as e:
             log.info(e)
             log.info("will retry shortly")
+        if c is not None:
+            try:
+                c.disconnect("reconnecting...")
+            except:
+                pass
         time.sleep(args.retry)
 
 if __name__ == "__main__":
