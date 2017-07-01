@@ -1,11 +1,12 @@
 pkgname=smirc
 pkgver=0.0.4
-pkgrel=1
+pkgrel=2
 pkgdesc='System monitor IRC bot'
 url='https://github.com/epiphyte/smirc'
 license=('MIT')
 depends=('python' 'python-pyzmq' 'python-irc')
 makedepends=('git' 'python-setuptools')
+replaces=('mbot-receiver')
 source=("git+$url")
 sha256sums=('SKIP')
 backup=('etc/epiphyte.d/smirc.json')
