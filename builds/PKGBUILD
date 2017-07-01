@@ -11,6 +11,11 @@ source=("git+$url")
 sha256sums=('SKIP')
 backup=('etc/epiphyte.d/smirc.json')
 
+build() {
+  cd ${srcdir}/$pkgname
+  sed -i "s/__VERSION__/$pkgver-$pkgrel/g" smirc.py
+}
+
 package() {
   cd ${srcdir}/$pkgname
   install -Dm 755 smirc.py ${pkgdir}/usr/bin/smirc
