@@ -45,16 +45,6 @@ log = logging.getLogger('smirc')
 log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
 
-
-def on_disconnect(connection, event):
-    """Disconnected."""
-    log.info("disconnected")
-    log.info(event)
-    global RESET
-    with lock:
-        RESET = True
-
-
 def _send_lines(c, targets, val):
     """Send lines."""
     for item in val.split("\n"):
@@ -298,9 +288,7 @@ def main():
                                connect_factory=factory)
             c.add_global_handler("welcome", on_connect)
             c.add_global_handler("pubmsg", on_message)
-            c.add_global_handler("disconnect", on_disconnect)
             c.add_global_handler("pong", on_pong)
-            c.add_global_handler("quit", on_disconnect)
             do_ping = 0
             while True:
                 react.process_once(timeout=args.poll)
