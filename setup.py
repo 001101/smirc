@@ -11,7 +11,7 @@ setup(
     url='https://github.com/epiphyte/smirc',
     license='MIT',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=['irc', 'zmq'],
+    install_requires=[],
     entry_points={
         'console_scripts': [
             'smirc=smirc.smirc:main'
