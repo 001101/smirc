@@ -1,6 +1,6 @@
 pkgname=smirc
-pkgver=0.0.3
-pkgrel=3
+pkgver=0.0.4
+pkgrel=1
 pkgdesc='System monitor IRC bot'
 url='https://github.com/epiphyte/smirc'
 license=('MIT')
@@ -8,8 +8,11 @@ depends=('python' 'python-pyzmq' 'python-irc')
 makedepends=('git' 'python-setuptools')
 source=("git+$url")
 sha256sums=('SKIP')
+backup=('etc/epiphyte.d/smirc.json')
 
 package() {
   cd ${srcdir}/$pkgname
   install -Dm 755 smirc.py ${pkgdir}/usr/bin/smirc
+  install -Dm 644 example.json ${pkgdir}/etc/epiphyte.d/smirc.json
+  install -Dm 644 service/smirc.service ${pkgdir}/usr/lib/systemd/system/smirc.service
 }

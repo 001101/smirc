@@ -1,0 +1,10 @@
+[Unit]
+Description=System monitor IRC bot
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/smirc --bot
+
+[Install]
+WantedBy=multi-user.target
+
