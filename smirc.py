@@ -22,6 +22,8 @@ HOST = True
 JOINT = True
 CONTEXT = None
 RESET = False
+LAST_PONG = 0
+RETRIES = 0
 lock = threading.RLock()
 
 # events
@@ -43,6 +45,7 @@ log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
 
 def on_disconnect(connection, event):
+    """Disconnected."""
     log.info("disconnected")
     log.info(event)
     global RESET
@@ -61,10 +64,12 @@ def on_connect(connection, event):
     log.info("connected")
     global READY
     global CONTEXT
+    global RETRIES
     with lock:
         READY = True
         connection.join(CONTEXT.hostname)
         connection.join(CONTEXT.joint)
+        RETRIES = 0
 
 
 def _act(connection, event):
@@ -110,23 +115,41 @@ def on_message(connection, event):
         _act(connection, event)
 
 
-def queue_thread(args, q):
+def queue_thread(args, q, ctrl):
     """ZMQ receiving thread."""
-    while True:
+    running = True
+    while running:
         try:
             context = zmq.Context()
             socket = context.socket(zmq.REP)
             socket.bind("tcp://*:%s" % args.zmq)
+            socket.RCVTIMEO = args.poll * 1000
             while True:
-                message = socket.recv_string()
-                socket.send_string("ack")
-                log.info(message)
-                q.put(message)
-                time.sleep(args.poll)
+                try:
+                    message = socket.recv_string()
+                    socket.send_string("ack")
+                    log.info(message)
+                    q.put(message)
+                    time.sleep(args.poll)
+                except zmq.error.Again as z:
+                    if str(z) == "Resource temporarily unavailable":
+                        try:
+                            val = ctrl.get(block=False, timeout=args.poll)
+                            # NOTE: only stop for now
+                            running = False
+                            raise Exception("bind reset")
+                        except Empty:
+                            pass
+                    else:
+                        raise Exception(str(z))
         except Exception as e:
-            log.info("will rebind shortly")
+            log.info("zmq error")
             log.info(e)
-            time.sleep(args.retry)
+            if running:
+                log.info("will rebind shortly")
+                time.sleep(args.retry)
+            else:
+                log.info('stopping...')
 
 
 class Ctx(object):
@@ -149,15 +172,22 @@ def get_args():
     if not os.path.exists(args.config):
         print("no config file exists")
         exit(1)
+    commands = {}
     with open(args.config) as f:
         obj = Ctx()
         host = socket.gethostname()
         setattr(obj, "hostname", "#" + host)
         setattr(obj, "name", host + "-bot")
         setattr(obj, "bot", args.bot)
+        setattr(obj, "commands", commands)
         cfg = json.loads(f.read())
         for k in cfg.keys():
-            setattr(obj, k, cfg[k])
+            if k == "commands":
+                sub = cfg[k]
+                for sub_key in sub.keys():
+                    commands[IND + sub_key] = sub[sub_key]
+            else:
+                setattr(obj, k, cfg[k])
         return obj
 
 
@@ -171,11 +201,21 @@ def sending(args):
     log.info(ack)
 
 
+def on_pong(connection, event):
+    """PONG received."""
+    log.info(event)
+    global LAST_PONG
+    with lock:
+        LAST_PONG = 0
+
+
 def main():
     """Program entry."""
     global CONTEXT
     global READY
     global RESET
+    global LAST_PONG
+    global RETRIES
     args = get_args()
     with lock:
         CONTEXT = args
@@ -183,7 +223,8 @@ def main():
         sending(args)
         return
     q = Queue()
-    background_thread = threading.Thread(target=queue_thread, args=(args, q))
+    ctrl = Queue()
+    background_thread = threading.Thread(target=queue_thread, args=(args, q, ctrl))
     background_thread.start()
     while True:
         c = None
@@ -201,7 +242,9 @@ def main():
             c.add_global_handler("welcome", on_connect)
             c.add_global_handler("pubmsg", on_message)
             c.add_global_handler("disconnect", on_disconnect)
+            c.add_global_handler("pong", on_pong)
             c.add_global_handler("quit", on_disconnect)
+            do_ping = 0
             while True:
                 react.process_once(timeout=args.poll)
                 with lock:
@@ -218,7 +261,16 @@ def main():
                             pass
                     if RESET:
                         raise Exception("resetting...")
+                    if LAST_PONG > 10:
+                        LAST_PONG = 0
+                        raise Exception("no recent pongs...")
                 time.sleep(args.poll)
+                do_ping += 1
+                if do_ping > 10:
+                    do_ping = 0
+                    c.ping(args.joint)
+                with lock:
+                    LAST_PONG += 1
         except Exception as e:
             log.info(e)
             log.info("will retry shortly")
@@ -227,7 +279,19 @@ def main():
                 c.disconnect("reconnecting...")
             except:
                 pass
-        time.sleep(args.retry)
+        kill = False
+        with lock:
+            kill = RETRIES > 3
+            if not kill:
+                RETRIES += 1
+        if kill:
+            log.info("killing process...")
+            time.sleep(900)
+            ctrl.put(0)
+            log.info("killed.")
+            break
+        else:
+            time.sleep(args.retry)
 
 if __name__ == "__main__":
     main()
