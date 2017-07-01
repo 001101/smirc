@@ -44,6 +44,7 @@ log = logging.getLogger('smirc')
 log.addHandler(JournalHandler())
 log.setLevel(logging.INFO)
 
+
 def on_disconnect(connection, event):
     """Disconnected."""
     log.info("disconnected")
@@ -51,6 +52,7 @@ def on_disconnect(connection, event):
     global RESET
     with lock:
         RESET = True
+
 
 def _send_lines(c, targets, val):
     """Send lines."""
@@ -97,7 +99,7 @@ def _act(connection, event):
                     connection.privmsg(event.target, "alive")
                 if d == HELP:
                     _send_lines(connection, [event.target], HELP_TEXT)
-                if d== RESTART:
+                if d == RESTART:
                     log.info("restart requested...")
                     with lock:
                         RESET = True
@@ -224,7 +226,9 @@ def main():
         return
     q = Queue()
     ctrl = Queue()
-    background_thread = threading.Thread(target=queue_thread, args=(args, q, ctrl))
+    background_thread = threading.Thread(target=queue_thread, args=(args,
+                                                                    q,
+                                                                    ctrl))
     background_thread.start()
     while True:
         c = None
