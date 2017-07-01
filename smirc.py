@@ -15,6 +15,7 @@ import json
 import sys
 import logging
 from systemd.journal import JournalHandler
+import subprocess
 
 # globals
 READY = False
@@ -99,10 +100,59 @@ def _act(connection, event):
                     connection.privmsg(event.target, "alive")
                 if d == HELP:
                     _send_lines(connection, [event.target], HELP_TEXT)
+                    cmds = []
+                    with lock:
+                        for item in CONTEXT.commands:
+                            cmds.append(item)
+                    if len(cmds) > 0:
+                        _send_lines(connection,
+                                    [event.target],
+                                    "\n".join(cmds))
                 if d == RESTART:
                     log.info("restart requested...")
                     with lock:
                         RESET = True
+                cmd = None
+                subcmd = d.split(" ")
+                if len(subcmd) > 0:
+                    key = subcmd[0]
+                    with lock:
+                        if key in CONTEXT.commands:
+                            cmd = CONTEXT.commands[key]
+                    if cmd is not None:
+                        _proc_cmd(cmd, connection, [event.target], subcmd[1:])
+
+
+def _proc_cmd(cmd, connection, target, subcmd):
+    """Process command."""
+    try:
+        cmds = []
+        cmds.append(cmd)
+        for item in subcmd:
+            cmds.append(item)
+        log.info(cmds)
+        p = subprocess.Popen(cmds,
+                             stderr=subprocess.STDOUT,
+                             stdout=subprocess.PIPE)
+        outs = None
+        errs = None
+        try:
+            outs, errs = p.communicate(timeout=60)
+        except TimeoutExpired:
+            proc.kill()
+            outs, errs = p.communicate()
+        out = []
+        if outs is not None:
+            out.append(outs)
+        if errs is not None:
+            out.append(errs)
+            log.info(out)
+        if len(out) > 0:
+            _send_lines(connection,
+                        target,
+                        "\n".join([x.decode("utf-8") for x in out]))
+    except Exception as e:
+        _send_lines(connection, target, "unable to execute command: " + str(e))
 
 
 def on_message(connection, event):
@@ -181,7 +231,6 @@ def get_args():
         setattr(obj, "hostname", "#" + host)
         setattr(obj, "name", host + "-bot")
         setattr(obj, "bot", args.bot)
-        setattr(obj, "commands", commands)
         cfg = json.loads(f.read())
         for k in cfg.keys():
             if k == "commands":
@@ -190,6 +239,8 @@ def get_args():
                     commands[IND + sub_key] = sub[sub_key]
             else:
                 setattr(obj, k, cfg[k])
+        log.info(commands)
+        setattr(obj, "commands", commands)
         return obj
 
 
@@ -273,8 +324,8 @@ def main():
                 if do_ping > 10:
                     do_ping = 0
                     c.ping(args.joint)
-                with lock:
-                    LAST_PONG += 1
+                    with lock:
+                        LAST_PONG += 1
         except Exception as e:
             log.info(e)
             log.info("will retry shortly")

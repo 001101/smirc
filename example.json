@@ -5,5 +5,9 @@
     "server": "example.com",
     "port": 6697,
     "retry": 10,
-    "poll": 3
+    "poll": 3,
+    "commands":
+    {
+        "test": "/etc/epiphyte.d/script.sh"
+    }
 }
