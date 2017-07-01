@@ -1,7 +1,7 @@
 smirc
 ===
 
-System monitoring bot to sit in IRC and report system information
+System monitoring bot to sit in IRC and report system information. Provides a locally bound zmq bind that will support streaming text to irc from the console
 
 # install
 
@@ -24,6 +24,14 @@ vim /etc/epiphyte.d/smirc.json
 
 # usage
 
+## bot service
+
+enable the systemd service
+```
+systemctl enable smirc
+systemctl start smirc
+```
+
 bots will join the configured joint channel and a per-host specific channel
 
 e.g. on host abc it will join (assuming joint is the name in the config)
@@ -32,3 +40,9 @@ e.g. on host abc it will join (assuming joint is the name in the config)
 #abc
 ```
 
+## client
+
+with a running bot service
+```
+echo "hello world" | smirc
+```
