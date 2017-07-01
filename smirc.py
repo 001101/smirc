@@ -218,7 +218,7 @@ def get_args():
                         default="/etc/epiphyte.d/smirc.json")
     parser.add_argument('--bot',
                         action="store_true")
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
     if not os.path.exists(args.config):
         print("no config file exists")
         exit(1)
@@ -239,15 +239,19 @@ def get_args():
                 setattr(obj, k, cfg[k])
         log.info(commands)
         setattr(obj, "commands", commands)
-        return obj
+        return (obj, unknown)
 
 
-def sending(args):
+def sending(args, data):
     """Sending a message/client."""
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect("tcp://localhost:%s" % args.zmq)
-    socket.send_string("".join(sys.stdin.readlines()))
+    lines = data
+    if lines is None or len(lines) == 0:
+        lines = sys.stdin.readlines()
+    datum = "".join(lines)
+    socket.send_string(datum)
     ack = socket.recv()
     log.info(ack)
 
@@ -267,11 +271,12 @@ def main():
     global RESET
     global LAST_PONG
     global RETRIES
-    args = get_args()
+    parsed = get_args()
+    args = parsed[0]
     with lock:
         CONTEXT = args
     if not args.bot:
-        sending(args)
+        sending(args, parsed[1])
         return
     q = Queue()
     ctrl = Queue()
