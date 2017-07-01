@@ -13,6 +13,8 @@ import os
 import socket
 import json
 import sys
+import logging
+from systemd.journal import JournalHandler
 
 # globals
 READY = False
@@ -33,6 +35,10 @@ HELP_RAW[STATUS] = "check status"
 HELP_RAW[DEBUG] = "change debug output/toggle"
 HELP_TEXT = "\n".join(["{} => {}".format(x, HELP_RAW[x]) for x in HELP_RAW])
 
+# logging
+log = logging.getLogger('smirc')
+log.addHandler(JournalHandler())
+log.setLevel(logging.INFO)
 
 def _send_lines(c, targets, val):
     """Send lines."""
@@ -43,7 +49,7 @@ def _send_lines(c, targets, val):
 
 def on_connect(connection, event):
     """On connection."""
-    print('connected')
+    log.info("connected")
     global READY
     global CONTEXT
     with lock:
@@ -86,6 +92,7 @@ def on_message(connection, event):
         if event.target in [CONTEXT.hostname, CONTEXT.joint]:
             do_action = True
     if do_action and event.type == "pubmsg":
+        log.info(event)
         _act(connection, event)
 
 
@@ -98,11 +105,13 @@ def queue_thread(args, q):
             socket.bind("tcp://*:%s" % args.zmq)
             while True:
                 message = socket.recv_string()
+                log.info(message)
                 q.put(message)
                 socket.send_string("ack")
                 time.sleep(args.poll)
         except Exception as e:
-            print(e)
+            log.info("will rebind shortly")
+            log.info(e)
             time.sleep(args.retry)
 
 
@@ -144,7 +153,8 @@ def sending(args):
     socket = context.socket(zmq.REQ)
     socket.connect("tcp://localhost:%s" % args.zmq)
     socket.send_string("".join(sys.stdin.readlines()))
-    socket.recv()
+    ack = socket.recv()
+    log.info(ack)
 
 
 def main():
@@ -188,7 +198,8 @@ def main():
                             pass
                 time.sleep(args.poll)
         except Exception as e:
-            print(e)
+            log.info(e)
+            log.info("will retry shortly")
         time.sleep(args.retry)
 
 if __name__ == "__main__":
