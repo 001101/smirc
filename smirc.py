@@ -58,6 +58,8 @@ def on_disconnect(connection, event):
 def _send_lines(c, targets, val):
     """Send lines."""
     for item in val.split("\n"):
+        if len(item.strip()) == 0:
+            continue
         for target in targets:
             c.privmsg(target, item)
 
