@@ -25,6 +25,7 @@ HOST = True
 JOINT = True
 CONTEXT = None
 RESET = False
+KILLED = False
 LAST_PONG = 0
 RETRIES = 0
 lock = threading.RLock()
@@ -35,12 +36,18 @@ STATUS = IND + "status"
 DEBUG = IND + "debug"
 HELP = IND + "help"
 RESTART = IND + "restart"
+KILL = IND + "killkillkill"
 
 # help text
 HELP_RAW = {}
 HELP_RAW[STATUS] = "check status"
 HELP_RAW[DEBUG] = "change debug output/toggle"
+HELP_RAW[RESTART] = "restart the bot"
+HELP_RAW[KILL] = "kill the bot (full service reboot)"
 HELP_TEXT = "\n".join(["{} => {}".format(x, HELP_RAW[x]) for x in HELP_RAW])
+
+# ZMQ thread
+_STOP = 0
 
 # logging
 log = logging.getLogger('smirc')
@@ -65,7 +72,8 @@ def on_connect(connection, event):
     with lock:
         READY = True
         connection.join(CONTEXT.hostname)
-        connection.join(CONTEXT.joint)
+        for item in CONTEXT.rooms:
+            connection.join(item)
         RETRIES = 0
 
 
@@ -75,6 +83,7 @@ def _act(connection, event):
     global JOINT
     global CONTEXT
     global RESET
+    global KILLED
     data = event.arguments
     if data and len(data) > 0:
         for d in data:
@@ -86,7 +95,7 @@ def _act(connection, event):
                             msg = "private"
                             HOST = True
                             JOINT = False
-                        elif CONTEXT.joint == event.target:
+                        elif event.target in CONTEXT.rooms:
                             HOST = True
                             JOINT = True
                         connection.privmsg(event.target, msg)
@@ -110,6 +119,11 @@ def _act(connection, event):
                            (len(parts) > 1 and CONTEXT.name in parts[1:]):
                                log.info('restart accepted...')
                                RESET = True
+                if d == KILL:
+                    with lock:
+                        if event.target == CONTEXT.hostname:
+                            log.info("killed.")
+                            KILLED = True
                 cmd = None
                 subcmd = d.split(" ")
                 if len(subcmd) > 0:
@@ -158,7 +172,7 @@ def on_message(connection, event):
     global CONTEXT
     do_action = False
     with lock:
-        if event.target in [CONTEXT.hostname, CONTEXT.joint]:
+        if event.target in [CONTEXT.hostname] + CONTEXT.rooms:
             do_action = True
     if do_action and event.type == "pubmsg":
         log.info(event)
@@ -210,6 +224,8 @@ class Ctx(object):
         self.retry = 10
         self.poll = 3
         self.send = 60
+        self.joint = "#fragmented"
+        self.rooms = []
 
 
 def get_args():
@@ -241,6 +257,10 @@ def get_args():
                 setattr(obj, k, cfg[k])
         log.info(commands)
         setattr(obj, "commands", commands)
+        if obj.rooms is None or \
+           len(obj.rooms) == 0 or \
+           obj.joint not in obj.rooms:
+            obj.rooms.append(obj.joint)
         return (obj, unknown)
 
 
@@ -283,6 +303,7 @@ def main():
     global RESET
     global LAST_PONG
     global RETRIES
+    global KILLED
     parsed = get_args()
     args = parsed[0]
     with lock:
@@ -317,12 +338,17 @@ def main():
             while True:
                 react.process_once(timeout=args.poll)
                 with lock:
+                    if KILLED:
+                        ctrl.put(_STOP)
+                        log.info("kill kill kill")
+                        exit(1)
                     if READY:
                         try:
                             val = q.get(block=False, timeout=args.poll)
                             targets = []
                             if JOINT:
-                                targets.append(args.joint)
+                                for item in args.rooms:
+                                    targets.append(item)
                             if HOST:
                                 targets.append(args.hostname)
                             _send_lines(c, targets, val)
@@ -337,7 +363,7 @@ def main():
                 do_ping += 1
                 if do_ping > 10:
                     do_ping = 0
-                    c.ping(args.joint)
+                    c.ping(args.hostname)
                     with lock:
                         LAST_PONG += 1
         except Exception as e:
@@ -356,7 +382,7 @@ def main():
         if kill:
             log.info("killing process...")
             time.sleep(900)
-            ctrl.put(0)
+            ctrl.put(_STOP)
             log.info("killed.")
             break
         else:
