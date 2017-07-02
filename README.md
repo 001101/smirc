@@ -46,3 +46,32 @@ with a running bot service
 ```
 echo "hello world" | smirc
 ```
+
+## commands
+
+anything in the json "commands" dictionary are name-value pairs such that the name will be surfaced as a command `!<name>` and will execute the system command `<value>`
+
+## interacting
+
+to see what custom commands or general abilities a bot has
+```
+!help
+```
+
+for a custom command
+```
+!customcmd arg1 arg2
+```
+
+to report status/version
+```
+!status
+```
+
+to restart (only works in bot private channel or by naming the bot(s) to restart)
+```
+# priv channel
+!restart
+# joint channel
+!restart host-bot host2-bot
+```
