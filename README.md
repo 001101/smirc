@@ -1,7 +1,7 @@
 smirc
 ===
 
-System monitoring bot to sit in IRC and report system information. Provides a locally bound zmq bind that will support streaming text to irc from the console
+System Monitor irc (SMirc) bot to sit in IRC and report system information. Provides a locally bound zmq bind that will support streaming text to irc from the console
 
 # install
 
