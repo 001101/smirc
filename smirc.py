@@ -181,8 +181,8 @@ def queue_thread(args, q, ctrl):
                     log.info(message)
                     q.put(message)
                     time.sleep(args.poll)
-                except zmq.error.Again as z:
-                    if str(z) == "Resource temporarily unavailable":
+                except zmq.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
                         try:
                             val = ctrl.get(block=False, timeout=args.poll)
                             # NOTE: only stop for now
@@ -207,7 +207,9 @@ class Ctx(object):
 
     def __init__(self):
         """Init the instance."""
-        pass
+        self.retry = 10
+        self.poll = 3
+        self.send = 60
 
 
 def get_args():
@@ -251,9 +253,19 @@ def sending(args, data):
     if lines is None or len(lines) == 0:
         lines = sys.stdin.readlines()
     datum = "".join(lines)
-    socket.send_string(datum)
-    ack = socket.recv()
-    log.info(ack)
+    linger = args.send * 1000
+    socket.RCVTIMEO = linger
+    result = False
+    socket.setsockopt(zmq.LINGER, linger)
+    try:
+        socket.send_string(datum, flags=zmq.NOBLOCK)
+        ack = socket.recv(flags=zmq.NOBLOCK)
+        log.info(ack)
+        result = True
+    except zmq.error.Again as z:
+        log.info("sending error")
+        log.info(z)
+    return result
 
 
 def on_pong(connection, event):
@@ -276,8 +288,9 @@ def main():
     with lock:
         CONTEXT = args
     if not args.bot:
-        sending(args, parsed[1])
-        return
+        if not sending(args, parsed[1]):
+            exit(1)
+        exit(0)
     q = Queue()
     ctrl = Queue()
     background_thread = threading.Thread(target=queue_thread, args=(args,

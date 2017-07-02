@@ -6,6 +6,7 @@
     "port": 6697,
     "retry": 10,
     "poll": 3,
+    "send": 60,
     "commands":
     {
         "test": "/etc/epiphyte.d/script.sh"
