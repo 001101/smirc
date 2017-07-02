@@ -48,6 +48,10 @@ HELP_TEXT = "\n".join(["{} => {}".format(x, HELP_RAW[x]) for x in HELP_RAW])
 
 # ZMQ thread
 _STOP = 0
+_TYPE = "type"
+_DATA = "data"
+_PRIV_TYPE = "priv"
+_PUB_TYPE = "pub"
 
 # logging
 log = logging.getLogger('smirc')
@@ -190,7 +194,7 @@ def queue_thread(args, q, ctrl):
             socket.RCVTIMEO = args.poll * 1000
             while True:
                 try:
-                    message = socket.recv_string()
+                    message = socket.recv_json()
                     socket.send_string("ack")
                     log.info(message)
                     q.put(message)
@@ -234,15 +238,24 @@ def get_args():
     parser.add_argument('--config',
                         type=str,
                         default="/etc/epiphyte.d/smirc.json")
+    parser.add_argument('--public', action="store_true")
+    parser.add_argument('--private', action="store_true")
     parser.add_argument('--bot',
                         action="store_true")
     args, unknown = parser.parse_known_args()
+    do_public = True
+    do_private = True
+    if args.public or args.private:
+        do_public = args.public
+        do_private = args.private
     if not os.path.exists(args.config):
         print("no config file exists")
         exit(1)
     commands = {}
     with open(args.config) as f:
         obj = Ctx()
+        setattr(obj, "private", do_private)
+        setattr(obj, "public", do_public)
         host = socket.gethostname()
         setattr(obj, "hostname", "#" + host)
         setattr(obj, "name", host + "-bot")
@@ -278,7 +291,15 @@ def sending(args, data):
     result = False
     socket.setsockopt(zmq.LINGER, linger)
     try:
-        socket.send_string(datum, flags=zmq.NOBLOCK)
+        obj = []
+        if args.public:
+            obj.append(_PUB_TYPE)
+        if args.private:
+            obj.append(_PRIV_TYPE)
+        send_data = {}
+        send_data[_TYPE] = obj
+        send_data[_DATA] = datum
+        socket.send_json(send_data, flags=zmq.NOBLOCK)
         ack = socket.recv(flags=zmq.NOBLOCK)
         log.info(ack)
         result = True
@@ -346,12 +367,13 @@ def main():
                         try:
                             val = q.get(block=False, timeout=args.poll)
                             targets = []
-                            if JOINT:
+                            to = val[_TYPE]
+                            if JOINT and _PUB_TYPE in to:
                                 for item in args.rooms:
                                     targets.append(item)
-                            if HOST:
+                            if HOST and _PRIV_TYPE in to:
                                 targets.append(args.hostname)
-                            _send_lines(c, targets, val)
+                            _send_lines(c, targets, val[_DATA])
                         except Empty:
                             pass
                     if RESET:
