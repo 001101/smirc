@@ -126,7 +126,7 @@ def _act(connection, event):
                 if d == KILL:
                     with lock:
                         if event.target == CONTEXT.hostname:
-                            log.info("killed.")
+                            log.debug("killed.")
                             KILLED = True
                 cmd = None
                 subcmd = d.split(" ")
@@ -146,7 +146,7 @@ def _proc_cmd(cmd, connection, target, subcmd):
         cmds.append(cmd)
         for item in subcmd:
             cmds.append(item)
-        log.info(cmds)
+        log.debug(cmds)
         p = subprocess.Popen(cmds,
                              stderr=subprocess.STDOUT,
                              stdout=subprocess.PIPE)
@@ -162,7 +162,7 @@ def _proc_cmd(cmd, connection, target, subcmd):
             out.append(outs)
         if errs is not None:
             out.append(errs)
-            log.info(out)
+            log.debug(out)
         if len(out) > 0:
             _send_lines(connection,
                         target,
@@ -179,7 +179,7 @@ def on_message(connection, event):
         if event.target in [CONTEXT.hostname] + CONTEXT.rooms:
             do_action = True
     if do_action and event.type == "pubmsg":
-        log.info(event)
+        log.debug(event)
         _act(connection, event)
 
 
@@ -196,7 +196,7 @@ def queue_thread(args, q, ctrl):
                 try:
                     message = socket.recv_json()
                     socket.send_string("ack")
-                    log.info(message)
+                    log.debug(message)
                     q.put(message)
                     time.sleep(args.poll)
                 except zmq.ZMQError as e:
@@ -211,8 +211,8 @@ def queue_thread(args, q, ctrl):
                     else:
                         raise Exception(str(z))
         except Exception as e:
-            log.info("zmq error")
-            log.info(e)
+            log.warning("zmq error")
+            log.error(e)
             if running:
                 log.info("will rebind shortly")
                 time.sleep(args.retry)
@@ -269,7 +269,7 @@ def get_args():
                     commands[IND + sub_key] = sub[sub_key]
             else:
                 setattr(obj, k, cfg[k])
-        log.info(commands)
+        log.debug(commands)
         setattr(obj, "commands", commands)
         if obj.rooms is None or \
            len(obj.rooms) == 0 or \
@@ -302,17 +302,17 @@ def sending(args, data):
         send_data[_DATA] = datum
         socket.send_json(send_data, flags=zmq.NOBLOCK)
         ack = socket.recv(flags=zmq.NOBLOCK)
-        log.info(ack)
+        log.debug(ack)
         result = True
     except zmq.error.Again as z:
-        log.info("sending error")
-        log.info(z)
+        log.warning("sending error")
+        log.error(z)
     return result
 
 
 def on_pong(connection, event):
     """PONG received."""
-    log.info(event)
+    log.debug(event)
     global LAST_PONG
     with lock:
         LAST_PONG = 0
@@ -362,7 +362,7 @@ def main():
                 with lock:
                     if KILLED:
                         ctrl.put(_STOP)
-                        log.info("kill kill kill")
+                        log.debug("kill kill kill")
                         exit(1)
                     if READY:
                         try:
@@ -390,8 +390,8 @@ def main():
                     with lock:
                         LAST_PONG += 1
         except Exception as e:
-            log.info(e)
-            log.info("will retry shortly")
+            log.warning(e)
+            log.error("will retry shortly")
         if c is not None:
             try:
                 c.disconnect("reconnecting...")
