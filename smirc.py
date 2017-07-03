@@ -245,6 +245,7 @@ def get_args():
     args, unknown = parser.parse_known_args()
     do_public = True
     do_private = True
+    log.info(VERS)
     if args.public or args.private:
         do_public = args.public
         do_private = args.private
