@@ -55,7 +55,7 @@ _PUB_TYPE = "pub"
 
 # logging
 log = logging.getLogger('smirc')
-log.addHandler(JournalHandler())
+log.addHandler(JournalHandler(SYSLOG_IDENTIFIER='smirc'))
 log.setLevel(logging.INFO)
 
 def _send_lines(c, targets, val):
