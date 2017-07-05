@@ -331,9 +331,13 @@ def main():
     with lock:
         CONTEXT = args
     if not args.bot:
+        code = 0
         if not sending(args, parsed[1]):
-            exit(1)
-        exit(0)
+            code = 1
+        exit(code)
+    if args.server == "example.com":
+        print("default/example server detected...exiting...")
+        exit(1)
     q = Queue()
     ctrl = Queue()
     background_thread = threading.Thread(target=queue_thread, args=(args,
