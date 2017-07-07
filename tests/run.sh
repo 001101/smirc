@@ -5,11 +5,14 @@ rm -f *.log
 rm -f $RUNNING
 touch "$RUNNING"
 python smirc-test.py --bot --config test.json &
+echo "harness running..."
 sleep 1
 echo "!status" | python smirc-test.py --config test.json
+echo "command(s) sent"
 MAX=0
 while [ -e $RUNNING ]; do
     sleep 5
+    echo "waiting for tests to complete..."
     MAX=$((MAX+1))
     if [ $MAX -eq 5 ]; then
         echo "did not completed..."
@@ -20,6 +23,7 @@ done
 _requires()
 {
     for l in $(echo "${@:2}"); do
+        echo "checking logs for $l (must != $1)"
         cat *.log | grep -q "^$l"
         if [ $? -ne $1 ]; then
             echo "failed required line for: $l"
