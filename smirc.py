@@ -58,6 +58,7 @@ log = logging.getLogger('smirc')
 log.addHandler(JournalHandler(SYSLOG_IDENTIFIER='smirc'))
 log.setLevel(logging.INFO)
 
+
 def _send_lines(c, targets, val):
     """Send lines."""
     for item in val.split("\n"):
@@ -121,8 +122,8 @@ def _act(connection, event):
                         parts = d.split(" ")
                         if event.target == CONTEXT.hostname or \
                            (len(parts) > 1 and CONTEXT.name in parts[1:]):
-                               log.info('restart accepted...')
-                               RESET = True
+                                log.info('restart accepted...')
+                                RESET = True
                 if d == KILL:
                     with lock:
                         if event.target == CONTEXT.hostname:

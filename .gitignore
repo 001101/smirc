@@ -90,3 +90,5 @@ ENV/
 
 bin*
 *.png
+
+tests/smirc-test.py
