@@ -1,3 +1,5 @@
 pyzmq
 irc
 python-systemd
+pep8
+pep257
