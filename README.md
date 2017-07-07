@@ -15,7 +15,7 @@ pacman -S smirc
 
 or clone the dir and
 ```
-pip install zmq irc
+pip install -r requirements.txt
 python setup.py install
 ```
 
