@@ -1,14 +1,7 @@
 {
     "zmq": 5555,
-    "joint": "#mock",
+    "joint": "#original",
     "password": "SERVPASS",
     "server": "localhost",
-    "port": 6697,
-    "retry": 10,
-    "poll": 3,
-    "send": 60,
-    "commands":
-    {
-        "test": "/etc/epiphyte.d/script.sh"
-    }
+    "port": 6697
 }

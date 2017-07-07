@@ -253,15 +253,32 @@ def get_args():
     if not os.path.exists(args.config):
         print("no config file exists")
         exit(1)
+    obj = Ctx()
+    setattr(obj, "bot", args.bot)
+    host = socket.gethostname()
+    setattr(obj, "hostname", "#" + host)
+    setattr(obj, "name", host + "-bot")
+    setattr(obj, "private", do_private)
+    setattr(obj, "public", do_public)
     commands = {}
-    with open(args.config) as f:
-        obj = Ctx()
-        setattr(obj, "private", do_private)
-        setattr(obj, "public", do_public)
-        host = socket.gethostname()
-        setattr(obj, "hostname", "#" + host)
-        setattr(obj, "name", host + "-bot")
-        setattr(obj, "bot", args.bot)
+    load_config_context(obj, args.config, commands)
+    local_cfg = args.config + ".local"
+    if os.path.exists(local_cfg):
+        log.info('loading local config')
+        log.debug(local_cfg)
+        load_config_context(obj, local_cfg, commands)
+    log.debug(commands)
+    setattr(obj, "commands", commands)
+    if obj.rooms is None or \
+       len(obj.rooms) == 0 or \
+       obj.joint not in obj.rooms:
+        obj.rooms.append(obj.joint)
+    return (obj, unknown)
+
+
+def load_config_context(obj, file_name, commands):
+    """Load a config context into the object."""
+    with open(file_name) as f:
         cfg = json.loads(f.read())
         for k in cfg.keys():
             if k == "commands":
@@ -270,13 +287,6 @@ def get_args():
                     commands[IND + sub_key] = sub[sub_key]
             else:
                 setattr(obj, k, cfg[k])
-        log.debug(commands)
-        setattr(obj, "commands", commands)
-        if obj.rooms is None or \
-           len(obj.rooms) == 0 or \
-           obj.joint not in obj.rooms:
-            obj.rooms.append(obj.joint)
-        return (obj, unknown)
 
 
 def sending(args, data):

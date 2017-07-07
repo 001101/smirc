@@ -31,5 +31,5 @@ _requires()
         fi
     done
 }
-_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq"
-_requires 1 "sending Resource Address will"
+_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq loading"
+_requires 1 "sending Resource Address will #original"
