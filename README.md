@@ -3,6 +3,8 @@ smirc
 
 System Monitor irc (SMirc) bot to sit in IRC and report system information. Provides a locally bound zmq bind that will support streaming text to irc from the console
 
+[![Build Status](https://travis-ci.org/epiphyte/smirc.svg?branch=master)](https://travis-ci.org/epiphyte/smirc)
+
 # install
 
 use the [repo](https://mirror.epiphyte.network/repos)
