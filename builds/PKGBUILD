@@ -1,6 +1,6 @@
 pkgname=smirc
-pkgver=0.1.2
-pkgrel=2
+pkgver=0.1.3
+pkgrel=1
 pkgdesc='System monitor IRC bot'
 url='https://github.com/epiphyte/smirc'
 license=('MIT')
