@@ -301,8 +301,8 @@ def sending(args, data):
         send_data = {}
         send_data[_TYPE] = obj
         send_data[_DATA] = datum
-        socket.send_json(send_data, flags=zmq.NOBLOCK)
-        ack = socket.recv(flags=zmq.NOBLOCK)
+        socket.send_json(send_data)
+        ack = socket.recv()
         log.debug(ack)
         result = True
     except zmq.error.Again as z:
