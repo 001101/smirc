@@ -241,13 +241,14 @@ def get_args():
                         default="/etc/epiphyte.d/smirc.json")
     parser.add_argument('--public', action="store_true")
     parser.add_argument('--private', action="store_true")
+    parser.add_argument('--to', type=str)
     parser.add_argument('--bot',
                         action="store_true")
     args, unknown = parser.parse_known_args()
     do_public = True
     do_private = True
     log.info(VERS)
-    if args.public or args.private:
+    if args.public or args.private or args.to is not None and len(args.to) > 0:
         do_public = args.public
         do_private = args.private
     if not os.path.exists(args.config):
@@ -260,6 +261,7 @@ def get_args():
     setattr(obj, "name", host + "-bot")
     setattr(obj, "private", do_private)
     setattr(obj, "public", do_public)
+    setattr(obj, "to", args.to)
     commands = {}
     load_config_context(obj, args.config, commands)
     local_cfg = args.config + ".local"
@@ -308,6 +310,11 @@ def sending(args, data):
             obj.append(_PUB_TYPE)
         if args.private:
             obj.append(_PRIV_TYPE)
+        if args.to is not None and len(args.to) > 0:
+            if args.public and args.to:
+                log.info("public overrides --to")
+            else:
+                obj.append(args.to)
         send_data = {}
         send_data[_TYPE] = obj
         send_data[_DATA] = datum
@@ -384,11 +391,16 @@ def main():
                             val = q.get(block=False, timeout=args.poll)
                             targets = []
                             to = val[_TYPE]
-                            if JOINT and _PUB_TYPE in to:
+                            if JOINT:
                                 for item in args.rooms:
-                                    targets.append(item)
+                                    if _PUB_TYPE in to:
+                                        targets.append(item)
+                                    elif item in to:
+                                        targets.append(item)
                             if HOST and _PRIV_TYPE in to:
                                 targets.append(args.hostname)
+                            if len(targets) == 0:
+                                log.warn("no targets for message")
                             _send_lines(c, targets, val[_DATA])
                         except Empty:
                             pass
