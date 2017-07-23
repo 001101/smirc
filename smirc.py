@@ -82,7 +82,7 @@ def on_connect(connection, event):
         RETRIES = 0
 
 
-def _act(connection, event):
+def _act(connection, event, permitted):
     """Perform an action."""
     global HOST
     global JOINT
@@ -93,6 +93,12 @@ def _act(connection, event):
     if data and len(data) > 0:
         for d in data:
             if d.startswith(IND):
+                if d == STATUS:
+                    connection.privmsg(event.target, "alive: " + VERS)
+                    return
+                if not permitted:
+                    log.warn("not permitted user requested: " + d);
+                    return
                 if d == DEBUG:
                     with lock:
                         msg = "public"
@@ -104,8 +110,6 @@ def _act(connection, event):
                             HOST = True
                             JOINT = True
                         connection.privmsg(event.target, msg)
-                if d == STATUS:
-                    connection.privmsg(event.target, "alive: " + VERS)
                 if d == HELP:
                     _send_lines(connection, [event.target], HELP_TEXT)
                     cmds = []
@@ -176,16 +180,17 @@ def on_message(connection, event):
     """On message received."""
     global CONTEXT
     do_action = False
+    permitted = False
     with lock:
         if event.target in [CONTEXT.hostname] + CONTEXT.rooms:
+            do_action = True
             for source in CONTEXT.permitted:
                 if source in event.source:
-                    do_action = True
                     permitted = True
                     break
     if do_action and event.type == "pubmsg":
         log.debug(event)
-        _act(connection, event)
+        _act(connection, event, permitted)
 
 
 def queue_thread(args, q, ctrl):
