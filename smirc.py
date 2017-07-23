@@ -178,7 +178,11 @@ def on_message(connection, event):
     do_action = False
     with lock:
         if event.target in [CONTEXT.hostname] + CONTEXT.rooms:
-            do_action = True
+            for source in CONTEXT.permitted:
+                if source in event.source:
+                    do_action = True
+                    permitted = True
+                    break
     if do_action and event.type == "pubmsg":
         log.debug(event)
         _act(connection, event)
@@ -262,6 +266,7 @@ def get_args():
     setattr(obj, "private", do_private)
     setattr(obj, "public", do_public)
     setattr(obj, "to", args.to)
+    setattr(obj, "permitted", [""])
     commands = {}
     load_config_context(obj, args.config, commands)
     local_cfg = args.config + ".local"
