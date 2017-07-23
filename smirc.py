@@ -97,7 +97,7 @@ def _act(connection, event, permitted):
                     connection.privmsg(event.target, "alive: " + VERS)
                     return
                 if not permitted:
-                    log.warn("not permitted user requested: " + d);
+                    log.warn("not permitted user requested: " + d)
                     return
                 if d == DEBUG:
                     with lock:
