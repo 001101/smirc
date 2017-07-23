@@ -15,7 +15,7 @@ while [ -e $RUNNING ]; do
     echo "waiting for tests to complete..."
     MAX=$((MAX+1))
     if [ $MAX -eq 5 ]; then
-        echo "did not completed..."
+        echo "did not complete..."
         exit
     fi
 done
