@@ -92,3 +92,4 @@ bin*
 *.png
 
 tests/smirc-test.py
+tests/running.tmp
