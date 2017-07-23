@@ -49,6 +49,7 @@ class Event(object):
         self.target = "#mock"
         self.arguments = []
         self.type = "pubmsg"
+        self.source = ""
 
 
 class Server(object):
