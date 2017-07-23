@@ -96,6 +96,7 @@ def _act(connection, event, permitted):
                 if d == STATUS:
                     connection.privmsg(event.target, "alive: " + VERS)
                     return
+                # NOTE: Commands after this section require permission
                 if not permitted:
                     log.warn("not permitted user requested: " + d)
                     return
