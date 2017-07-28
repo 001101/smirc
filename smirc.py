@@ -56,8 +56,8 @@ _PRIV_TYPE = "priv"
 _PUB_TYPE = "pub"
 
 # Command types
-_CMD_TYPE = "command"
-_MOD_TYPE = "module"
+_CMD_TYPE = "commands"
+_MOD_TYPE = "modules"
 
 # logging
 log = logging.getLogger('smirc')

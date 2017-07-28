@@ -4,7 +4,11 @@
     "password": "SERVPASS",
     "server": "localhost",
     "port": 6697,
-    "module":
+    "commands":
+    {
+        "cmd": "cmd.sh"
+    },
+    "modules":
     {
         "mod": "module.py"
     }

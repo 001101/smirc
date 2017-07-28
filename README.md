@@ -51,11 +51,11 @@ echo "hello world" | smirc
 
 ## commands
 
-anything in the json "command" dictionary are name-value pairs such that the name will be surfaced as a command `!<name>` and will execute the system command `<value>`
+anything in the json "commands" dictionary are name-value pairs such that the name will be surfaced as a command `!<name>` and will execute the system command `<value>`
 
 ## modules
 
-anything in the json "module" dictionary are name-value pairs such that:
+anything in the json "modules" dictionary are name-value pairs such that:
 * if a `handle` function is defined - it will be called on pubmsg (following normal permitted and action settings)
 * if a `execute` function is defined - the name will be surfaced as a command `!<name>` and will load and execute a python module from the path.
 
