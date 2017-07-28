@@ -10,7 +10,6 @@ sleep 1
 _test_command() {
     echo "!$1" | python smirc-test.py --config test.json
 }
-
 _test_command "status"
 _test_command "mod"
 echo "command(s) sent"
@@ -36,5 +35,10 @@ _requires()
         fi
     done
 }
-_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq loading module handle"
+_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq loading module handle dict_keys"
 _requires 1 "sending Resource Address will #original"
+cat *.log | grep -F -q "dict_keys(['!mod', '!test'])"
+if [ $? -ne 0 ]; then
+    echo "missing required module/command loads"
+    exit 1
+fi

@@ -299,8 +299,9 @@ def get_args():
         log.info('loading local config')
         log.debug(local_cfg)
         load_config_context(obj, local_cfg, commands)
-    log.debug(commands)
     setattr(obj, "commands", commands)
+    log.info(commands.keys())
+    log.debug(commands)
     if obj.rooms is None or \
        len(obj.rooms) == 0 or \
        obj.joint not in obj.rooms:
