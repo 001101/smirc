@@ -205,6 +205,11 @@ def on_message(connection, event):
                     break
     if do_action and event.type == "pubmsg":
         log.debug(event)
+        with lock:
+            for item in CONTEXT.commands:
+                cmd_obj = CONTEXT.commands[item]
+                if not cmd_obj.is_shell:
+                    cmd_obj.handle(connection, event, log)
         _act(connection, event, permitted)
 
 
@@ -311,8 +316,15 @@ class Command(object):
         self.is_shell = is_shell
         self.path = path
         self._mod = None
+        self._is_handle = False
+        self._is_execute = False
         if not self.is_shell:
             self._mod = self._load_mod()
+            avail = [x for x in dir(self._mod) if not x.startswith("_")]
+            self._is_handle = "handle" in avail
+            self._is_execute = "execute" in avail
+            if not self._is_handle and not self._is_execute:
+                log.warn("module handler has not actions")
 
     def _load_mod(self):
         """Module loading/import for commands."""
@@ -321,9 +333,15 @@ class Command(object):
         spec.loader.exec_module(mod)
         return mod.Module()
 
+    def handle(self, connection, event, log):
+        """Handle a message entirely."""
+        if self._is_handle:
+            self._mod.handle(connection, event, log)
+
     def module(self, connection, target, subcmds, log):
         """Execute command module."""
-        self._mod.execute(connection, target, subcmds, log)
+        if self._is_execute:
+            self._mod.execute(connection, target, subcmds, log)
 
 
 def load_config_context(obj, file_name, commands):
@@ -386,6 +404,7 @@ def on_pong(connection, event):
     global LAST_PONG
     with lock:
         LAST_PONG = 0
+
 
 def main():
     """Program entry."""
