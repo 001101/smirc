@@ -55,7 +55,9 @@ anything in the json "command" dictionary are name-value pairs such that the nam
 
 ## modules
 
-anything in the json "module" dictionary are name-value pairs such that name will be surfaced as a command `!<name>` and will load and execute a python module from the path
+anything in the json "module" dictionary are name-value pairs such that:
+* if a `handle` function is defined - it will be called on pubmsg (following normal permitted and action settings)
+* if a `execute` function is defined - the name will be surfaced as a command `!<name>` and will load and execute a python module from the path.
 
 the module definition must be
 ```
@@ -64,14 +66,23 @@ class Module(object):
     def __init(self):
         """optional init."""
         self.var = 1
+
     def execute(self, connection, target, sub, log):
-        """required method and signature."""
+        """required method and signature for command specific syntax."""
         # connection is the irc connection
         # target is the room
         # sub is any subcommands passed to by the input
         # log is a logging instance
         # <actual implementation>
         connection.privmsg(target, "hello")
+
+    def handle(self, connection, event, log):
+        """required method and signuatre for global message handling."""
+        # connection is the irc connection
+        # event is the generating event
+        # log is a logging instance
+        # <actual implementation>
+        connection.privmsg("#somechannel", "world")
 ```
 
 
