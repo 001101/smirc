@@ -51,7 +51,27 @@ echo "hello world" | smirc
 
 ## commands
 
-anything in the json "commands" dictionary are name-value pairs such that the name will be surfaced as a command `!<name>` and will execute the system command `<value>`
+anything in the json "command" dictionary are name-value pairs such that the name will be surfaced as a command `!<name>` and will execute the system command `<value>`
+
+## modules
+
+anything in the json "module" dictionary are name-value pairs such that name will be surfaced as a command `!<name>` and will load and execute a python module from the path
+
+the module definition must be
+```
+class Module(object):
+
+    def __init(self):
+        """optional init."""
+        self.var = 1
+    def execute(self, connection, target, sub, log):
+        """required method and signature."""
+        # connection is the irc connection
+        # target is the room
+        # sub is any subcommands passed to by the input
+        # log is a logging instance
+```
+
 
 ## interacting
 
