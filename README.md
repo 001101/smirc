@@ -71,6 +71,7 @@ class Module(object):
         # sub is any subcommands passed to by the input
         # log is a logging instance
         # <actual implementation>
+        connection.privmsg(target, "hello")
 ```
 
 
