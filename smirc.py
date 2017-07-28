@@ -16,6 +16,7 @@ import sys
 import logging
 from systemd.journal import JournalHandler
 import subprocess
+import importlib.util
 
 VERS = "__VERSION__"
 
@@ -52,6 +53,10 @@ _TYPE = "type"
 _DATA = "data"
 _PRIV_TYPE = "priv"
 _PUB_TYPE = "pub"
+
+# Command types
+_CMD_TYPE = "command"
+_MOD_TYPE = "module"
 
 # logging
 log = logging.getLogger('smirc')
@@ -145,9 +150,18 @@ def _act(connection, event, permitted):
                         _proc_cmd(cmd, connection, [event.target], subcmd[1:])
 
 
-def _proc_cmd(cmd, connection, target, subcmd):
+def _do_module(cmd, connection, target, subcmd):
+    """Process via module."""
+    cmd.module(connection, target, subcmd)
+
+
+def _proc_cmd(cmd_obj, connection, target, subcmd):
     """Process command."""
     try:
+        if not cmd_obj.is_shell:
+            _do_module(cmd_obj, connection, target, subcmd)
+            return
+        cmd = cmd_obj.path
         cmds = []
         cmds.append(cmd)
         for item in subcmd:
@@ -289,15 +303,42 @@ def get_args():
     return (obj, unknown)
 
 
+class Command(object):
+    """Command objects."""
+
+    def __init__(self, is_shell, path):
+        """Init a command instance."""
+        self.is_shell = is_shell
+        self.path = path
+        self._mod = None
+        if not self.is_shell:
+            self._mod = self._load_mod()
+
+    def _load_mod(self):
+        """Module loading/import for commands."""
+        spec = importlib.util.spec_from_file_location("smirc.mod", self.path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.Module()
+
+    def module(self, connection, target, subcmds):
+        """Execute command module."""
+        self._mod.execute(connection, target, subcmds)
+
+
 def load_config_context(obj, file_name, commands):
     """Load a config context into the object."""
     with open(file_name) as f:
         cfg = json.loads(f.read())
         for k in cfg.keys():
-            if k == "commands":
+            if k in [_CMD_TYPE, _MOD_TYPE]:
                 sub = cfg[k]
                 for sub_key in sub.keys():
-                    commands[IND + sub_key] = sub[sub_key]
+                    use_key = IND + sub_key
+                    if use_key in commands:
+                        log.warn("overwriting defined command: " + use_key)
+                    commands[use_key] = Command(k == _CMD_TYPE,
+                                                sub[sub_key])
             else:
                 setattr(obj, k, cfg[k])
 
