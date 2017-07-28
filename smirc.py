@@ -360,7 +360,7 @@ def main():
     with lock:
         CONTEXT = args
     if not args.bot:
-        log.info("sending data")
+        log.info("client")
         code = 0
         if not sending(args, parsed[1]):
             code = 1
