@@ -150,16 +150,11 @@ def _act(connection, event, permitted):
                         _proc_cmd(cmd, connection, [event.target], subcmd[1:])
 
 
-def _do_module(cmd, connection, target, subcmd):
-    """Process via module."""
-    cmd.module(connection, target, subcmd)
-
-
 def _proc_cmd(cmd_obj, connection, target, subcmd):
     """Process command."""
     try:
         if not cmd_obj.is_shell:
-            _do_module(cmd_obj, connection, target, subcmd)
+            cmd_obj.module(connection, target, subcmd, log)
             return
         cmd = cmd_obj.path
         cmds = []
@@ -321,9 +316,9 @@ class Command(object):
         spec.loader.exec_module(mod)
         return mod.Module()
 
-    def module(self, connection, target, subcmds):
+    def module(self, connection, target, subcmds, log):
         """Execute command module."""
-        self._mod.execute(connection, target, subcmds)
+        self._mod.execute(connection, target, subcmds, log)
 
 
 def load_config_context(obj, file_name, commands):

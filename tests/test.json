@@ -3,5 +3,9 @@
     "joint": "#original",
     "password": "SERVPASS",
     "server": "localhost",
-    "port": 6697
+    "port": 6697,
+    "module":
+    {
+        "mod": "module.py"
+    }
 }

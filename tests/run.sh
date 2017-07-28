@@ -7,7 +7,12 @@ touch "$RUNNING"
 python smirc-test.py --bot --config test.json &
 echo "harness running..."
 sleep 1
-echo "!status" | python smirc-test.py --config test.json
+_test_command() {
+    echo "!$1" | python smirc-test.py --config test.json
+}
+
+_test_command "status"
+_test_command "mod"
 echo "command(s) sent"
 MAX=0
 while [ -e $RUNNING ]; do
@@ -31,5 +36,5 @@ _requires()
         fi
     done
 }
-_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq loading"
+_requires 0 "alive connected __VERSION__ stopping !killkillkill #mock zmq loading module"
 _requires 1 "sending Resource Address will #original"
