@@ -29,6 +29,7 @@ RESET = False
 KILLED = False
 LAST_PONG = 0
 RETRIES = 0
+REPORTED_IN = False
 lock = threading.RLock()
 
 # events
@@ -189,9 +190,13 @@ def _proc_cmd(cmd_obj, connection, target, subcmd):
 def on_message(connection, event):
     """On message received."""
     global CONTEXT
+    global REPORTED_IN
     do_action = False
     permitted = False
     with lock:
+        if not REPORTED_IN:
+            connection.privmsg(CONTEXT.hostname, "online")
+            REPORTED_IN = True
         if event.target in [CONTEXT.hostname] + CONTEXT.rooms:
             do_action = True
             for source in CONTEXT.permitted:
@@ -381,7 +386,6 @@ def on_pong(connection, event):
     global LAST_PONG
     with lock:
         LAST_PONG = 0
-
 
 def main():
     """Program entry."""
