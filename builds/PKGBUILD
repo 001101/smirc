@@ -10,13 +10,13 @@ sha256sums=('SKIP')
 backup=('etc/epiphyte.d/smirc.json')
 
 build() {
-  cd ${srcdir}/$pkgname
+  cd ${srcdir}/$pkgname/smirc
   sed -i "s/__VERSION__/$pkgver-$pkgrel/g" smirc.py
 }
 
 package() {
   cd ${srcdir}/$pkgname
-  install -Dm 755 smirc.py ${pkgdir}/usr/bin/smirc
+  python setup.py install --root="$pkgdir/" --optimize=1
   install -Dm 644 example.json ${pkgdir}/etc/epiphyte.d/smirc.json
   install -Dm 644 service/smirc.service ${pkgdir}/usr/lib/systemd/system/smirc.service
 }
