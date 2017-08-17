@@ -1,6 +1,6 @@
 #!/bin/bash
 RUNNING="running.tmp"
-cat ../smirc.py | sed "s/^import irc\./import mock_irc\_/g;s/from systemd\.journal.*//g;s/.*JournalHandler.*/log.addHandler(logging.FileHandler('test.log'))/g" > smirc-test.py
+cat ../smirc/smirc.py | sed "s/^import irc\./import mock_irc\_/g;s/from systemd\.journal.*//g;s/.*JournalHandler.*/log.addHandler(logging.FileHandler('test.log'))/g" > smirc-test.py
 rm -f *.log
 rm -f $RUNNING
 touch "$RUNNING"
