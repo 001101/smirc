@@ -1,1 +1,0 @@
-echo "pkgver="$(cat ../setup.py | grep "version=" | cut -d "=" -f 2 | sed "s/\"//g;s/,//g") >> $2/PKGBUILD
