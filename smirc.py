@@ -59,6 +59,13 @@ _PUB_TYPE = "pub"
 _CMD_TYPE = "commands"
 _MOD_TYPE = "modules"
 
+# CLI flags
+_PUBLIC_FLAG = "--public"
+_PRIVATE_FLAG = "--private"
+_TO_FLAG = "--to"
+_BOT_FLAG = "--bot"
+_CONFIG_FLAG = "--config"
+
 # logging
 log = logging.getLogger('smirc')
 log.addHandler(JournalHandler(SYSLOG_IDENTIFIER='smirc'))
@@ -262,18 +269,35 @@ class Ctx(object):
         self.rooms = []
 
 
-def get_args():
+def run(config=None, public=None, private=None, to=None, bot=None):
+    """Run smirc command(s)."""
+    args = []
+    inputs = {}
+    inputs[_CONFIG_FLAG] = config
+    inputs[_PRIVATE_FLAG] = private
+    inputs[_PUBLIC_FLAG] = public
+    inputs[_TO_FLAG] = to
+    inputs[_BOT_FLAG] = bot
+    for k in inputs:
+        val = inputs[k]
+        if val is not None:
+            args.append(k)
+            args.append(val)
+    _run(args)
+
+
+def get_args(arguments=None):
     """Get the arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config',
+    parser.add_argument(_CONFIG_FLAG,
                         type=str,
                         default="/etc/epiphyte.d/smirc.json")
-    parser.add_argument('--public', action="store_true")
-    parser.add_argument('--private', action="store_true")
-    parser.add_argument('--to', type=str)
-    parser.add_argument('--bot',
+    parser.add_argument(_PUBLIC_FLAG, action="store_true")
+    parser.add_argument(_PRIVATE_FLAG, action="store_true")
+    parser.add_argument(_TO_FLAG, type=str)
+    parser.add_argument(_BOT_FLAG,
                         action="store_true")
-    args, unknown = parser.parse_known_args()
+    args, unknown = parser.parse_known_args(args=arguments)
     do_public = True
     do_private = True
     log.info(VERS)
@@ -409,13 +433,18 @@ def on_pong(connection, event):
 
 def main():
     """Program entry."""
+    _run(None)
+
+
+def _run(args):
+    """Execute the program/run the program."""
     global CONTEXT
     global READY
     global RESET
     global LAST_PONG
     global RETRIES
     global KILLED
-    parsed = get_args()
+    parsed = get_args(args)
     args = parsed[0]
     with lock:
         CONTEXT = args
