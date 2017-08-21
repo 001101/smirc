@@ -269,7 +269,7 @@ class Ctx(object):
         self.rooms = []
 
 
-def run(config=None, public=None, private=None, to=None, bot=None):
+def run(config=None, public=None, private=None, to=None, bot=None, added=None):
     """Run smirc command(s)."""
     args = []
     inputs = {}
@@ -283,6 +283,9 @@ def run(config=None, public=None, private=None, to=None, bot=None):
         if val is not None:
             args.append(k)
             args.append(val)
+    if added is not None:
+        for a in added:
+            args.append(a)
     _run(args)
 
 
