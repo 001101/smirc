@@ -1,3 +1,4 @@
+# Maintainer: Sean Enck <enckse@gmail.com>
 pkgname=smirc
 pkgver=0.4.1
 pkgrel=1
@@ -21,4 +22,5 @@ package() {
   install -Dm 755 smirc/smirc.py ${pkgdir}/usr/bin/smirc
   install -Dm 644 example.json ${pkgdir}/etc/epiphyte.d/smirc.json
   install -Dm 644 service/smirc.service ${pkgdir}/usr/lib/systemd/system/smirc.service
+  install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
 }
