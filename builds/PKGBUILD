@@ -1,6 +1,6 @@
 # Maintainer: Sean Enck <enckse@gmail.com>
 pkgname=smirc
-pkgver=0.4.1
+pkgver=0.4.2
 pkgrel=1
 pkgdesc='System monitor IRC bot'
 url='https://github.com/epiphyte/smirc'
