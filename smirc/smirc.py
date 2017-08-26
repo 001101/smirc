@@ -242,11 +242,11 @@ def queue_thread(args, q, ctrl):
                             val = ctrl.get(block=False, timeout=args.poll)
                             # NOTE: only stop for now
                             running = False
-                            raise Exception("bind reset")
+                            raise SMIRCError("bind reset")
                         except Empty:
                             pass
                     else:
-                        raise Exception(str(z))
+                        raise SMIRCError(str(z))
         except Exception as e:
             log.warning("zmq error")
             log.error(e)
@@ -291,10 +291,25 @@ def run(config=None,
     if arguments is not None:
         for a in arguments:
             args.append(a)
-    _run(args)
+    _run(args, False)
 
 
-def get_args(arguments=None):
+class SMIRCError(Exception):
+    """General smirc error."""
+
+
+def _handle_app(is_app, message, code):
+    """Handle application errors."""
+    if is_app:
+        print(message)
+        exit(code)
+    else:
+        if code == 0:
+            return
+        raise SMIRCError("{} -> {}".format(message))
+
+
+def get_args(arguments=None, is_app=False):
     """Get the arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(_CONFIG_FLAG,
@@ -313,8 +328,7 @@ def get_args(arguments=None):
         do_public = args.public
         do_private = args.private
     if not os.path.exists(args.config):
-        print("no config file exists")
-        exit(1)
+        _handle_app(is_app, "no config file exists", 1)
     obj = Ctx()
     setattr(obj, "bot", args.bot)
     host = socket.gethostname()
@@ -441,10 +455,10 @@ def on_pong(connection, event):
 
 def main():
     """Program entry."""
-    _run(None)
+    _run(None, True)
 
 
-def _run(args):
+def _run(args, is_app):
     """Execute the program/run the program."""
     global CONTEXT
     global READY
@@ -452,7 +466,7 @@ def _run(args):
     global LAST_PONG
     global RETRIES
     global KILLED
-    parsed = get_args(args)
+    parsed = get_args(arguments=args, is_app=is_app)
     args = parsed[0]
     with lock:
         CONTEXT = args
@@ -461,10 +475,9 @@ def _run(args):
         code = 0
         if not sending(args, parsed[1]):
             code = 1
-        exit(code)
+        _handle_app(is_app, "client executed", code)
     if args.server == "example.com":
-        print("default/example server detected...exiting...")
-        exit(1)
+        _handle_app(is_app, "default/example server detected...exiting...", 1)
     q = Queue()
     ctrl = Queue()
     background_thread = threading.Thread(target=queue_thread, args=(args,
@@ -493,8 +506,7 @@ def _run(args):
                 with lock:
                     if KILLED:
                         ctrl.put(_STOP)
-                        log.debug("kill kill kill")
-                        exit(1)
+                        _handle_app(is_app, "kill kill kill", 1)
                     if READY:
                         try:
                             val = q.get(block=False, timeout=args.poll)
@@ -514,10 +526,10 @@ def _run(args):
                         except Empty:
                             pass
                     if RESET:
-                        raise Exception("resetting...")
+                        raise SMIRCError("resetting...")
                     if LAST_PONG > 10:
                         LAST_PONG = 0
-                        raise Exception("no recent pongs...")
+                        raise SMIRCError("no recent pongs...")
                 time.sleep(args.poll)
                 do_ping += 1
                 if do_ping > 10:
