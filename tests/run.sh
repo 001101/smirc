@@ -12,10 +12,10 @@ _test_command() {
 echo "!$1" | python smirc_test.py --config test.json
 }
 _test_command "status"
-_test_command "mod"
 python -c '#!/usr/bin/python
 import smirc_test
 
+smirc_test.run(config="test.json", arguments=["!mod"])
 try:
     smirc_test.run(config="/invalid/path/config.json", arguments=["!mod"])
 except smirc_test.SMIRCError as e:
