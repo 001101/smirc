@@ -475,7 +475,7 @@ def _run(args, is_app):
         code = 0
         if not sending(args, parsed[1]):
             code = 1
-        _handle_app(is_app, "client executed", code)
+        return _handle_app(is_app, "client executed", code)
     if args.server == "example.com":
         _handle_app(is_app, "default/example server detected...exiting...", 1)
     q = Queue()
