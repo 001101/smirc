@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='smirc',
-    version="0.4.4",
+    version="__VERSION__",
     description='system monitor IRC bot',
     url='https://github.com/epiphyte/smirc',
     license='MIT',
