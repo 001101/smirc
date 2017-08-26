@@ -306,7 +306,7 @@ def _handle_app(is_app, message, code):
     else:
         if code == 0:
             return
-        raise SMIRCError("{} -> {}".format(message))
+        raise SMIRCError("{} -> {}".format(message, code))
 
 
 def get_args(arguments=None, is_app=False):
