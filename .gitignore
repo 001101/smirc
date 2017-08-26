@@ -91,5 +91,5 @@ ENV/
 bin*
 *.png
 
-tests/smirc-test.py
+tests/smirc_test.py
 tests/running.tmp

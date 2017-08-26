@@ -1,17 +1,18 @@
 #!/bin/bash
 RUNNING="running.tmp"
-cat ../smirc/smirc.py | sed "s/^import irc\./import mock_irc\_/g;s/from systemd\.journal.*//g;s/.*JournalHandler.*/log.addHandler(logging.FileHandler('test.log'))/g" > smirc-test.py
+cat ../smirc/smirc.py | sed "s/^import irc\./import mock_irc\_/g;s/from systemd\.journal.*//g;s/.*JournalHandler.*/log.addHandler(logging.FileHandler('test.log'))/g" > smirc_test.py
 rm -f *.log
 rm -f $RUNNING
 touch "$RUNNING"
-python smirc-test.py --bot --config test.json &
+python smirc_test.py --bot --config test.json &
 echo "harness running..."
 sleep 1
-_test_command() {
-    echo "!$1" | python smirc-test.py --config test.json
-}
-_test_command "status"
-_test_command "mod"
+echo "!status" | python smirc_test.py --config test.json
+python -c '#!/usr/bin/python
+import smirc_test
+
+smirc_test.run(config="test.json", arguments=["!mod"])'
+
 echo "command(s) sent"
 MAX=0
 while [ -e $RUNNING ]; do
