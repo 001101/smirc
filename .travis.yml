@@ -3,4 +3,4 @@ python:
     - "3.6"
 
 script:
-    - make
+    - make FLAGS="-std=c99"

@@ -17,4 +17,4 @@ analyze:
 	pep257 $(SRC)
 
 lib: clean
-	gcc -shared -Wall -o $(BIN)/libsmirc.so -fPIC src/smirc.c src/smirc.h
+	gcc -shared -Wall -o $(BIN)/libsmirc.so -fPIC src/smirc.c src/smirc.h $(FLAGS)
