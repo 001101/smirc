@@ -93,3 +93,5 @@ bin*
 
 tests/smirc_test.py
 tests/running.tmp
+
+bin/
