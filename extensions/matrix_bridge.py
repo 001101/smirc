@@ -31,7 +31,7 @@ class Module(object):
                         url = v
                     elif k == "SYNAPSE_API_TOKEN":
                         token = v
-                    elif k == "SYNAPSE_DEBUGGING":
+                    elif k == "SYNAPSE_IRC_BRIDGE":
                         room = v
         if room is not None and token is not None and url is not None:
             self._post = self._url.format(url, room, token)
