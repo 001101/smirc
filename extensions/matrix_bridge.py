@@ -1,27 +1,30 @@
 """Matrix bridge for a listener."""
+import urllib.request
+import json
 
 
-class MatrixBridgeModule(object):
+class Module(object):
     """Bridge implementation."""
 
     _url = "{}/_matrix/client/r0/rooms/{}/send/m.room.message?access_token={}"
 
-    def __init(self):
+    def __init__(self):
         """Init definition."""
         self._post = None
-        self._load_env()
+        self._init = False
 
-    def _load_env(self):
+    def _load_env(self, log):
         """Load environment."""
         room = None
         token = None
         url = None
+        log.info("loading env vars")
         with open("/etc/epiphyte.d/environment", 'r') as f:
             for line in f:
                 kv = line.split("=")
                 if len(kv) == 2:
                     k = kv[0]
-                    v = kv[1]
+                    v = kv[1].strip()
                     v = v[1:-1]
                     if k == "SYNAPSE_HOST":
                         url = v
@@ -35,8 +38,13 @@ class MatrixBridgeModule(object):
     def handle(self, connection, event, log):
         """required method and signuatre for gliobal message handling."""
         try:
+            if not self._init:
+                self._init = True
+                self._load_env(log)
             if self._post is None:
                 log.warn("no post settings enabled")
+                return
+            log.debug(self._post)
             data = event.arguments
             if data and len(data) > 0:
                 for d in data:
