@@ -7,7 +7,7 @@ class Module(object):
     """Bridge implementation."""
 
     _url = "{}/_matrix/client/r0/rooms/{}/send/m.room.message?access_token={}"
-    _body = "<body><pre>{}\n---\n{}</pre></body>"
+    _body = "<body><pre>{}\n{}\n---\n{}</pre></body>"
 
     def __init__(self):
         """Init definition."""
@@ -50,8 +50,11 @@ class Module(object):
             if data and len(data) > 0:
                 for d in data:
                     obj = {}
-                    obj["body"] = "{} -> {}".format(event.source, str(d))
+                    obj["body"] = "{},{} -> {}".format(event.source,
+                                                       event.target,
+                                                       str(d))
                     obj["formatted_body"] = self._body.format(event.source,
+                                                              event.target,
                                                               str(d))
                     obj["msgtype"] = "m.text"
                     obj["format"] = "org.matrix.custom.html"
