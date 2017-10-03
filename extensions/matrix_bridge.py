@@ -1,4 +1,8 @@
+"""Matrix bridge for a listener."""
+
+
 class MatrixBridgeModule(object):
+    """Bridge implementation."""
 
     _url = "{}/_matrix/client/r0/rooms/{}/send/m.room.message?access_token={}"
 
