@@ -249,7 +249,7 @@ def queue_thread(args, q, ctrl):
                         raise SMIRCError(str(z))
         except Exception as e:
             log.warning("zmq error")
-            log.error(e)
+            log.warning(e)
             if running:
                 log.info("will rebind shortly")
                 time.sleep(args.retry)
@@ -441,7 +441,7 @@ def sending(args, data):
         result = True
     except zmq.error.Again as z:
         log.warning("sending error")
-        log.error(z)
+        log.warning(z)
     return result
 
 
