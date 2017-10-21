@@ -539,7 +539,7 @@ def _run(args, is_app):
                         LAST_PONG += 1
         except Exception as e:
             log.warning(e)
-            log.error("will retry shortly")
+            log.warning("will retry shortly")
         if c is not None:
             try:
                 c.disconnect("reconnecting...")
